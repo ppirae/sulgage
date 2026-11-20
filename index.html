@@ -69,6 +69,26 @@ nav button.on{color:var(--text)}
 .sheet{background:var(--card);border-radius:22px 22px 0 0;padding:22px 18px calc(env(safe-area-inset-bottom) + 18px);width:100%;max-width:520px}
 .sheet h3{margin:0 0 8px;font-size:20px}
 .pledge{background:var(--card2);border-left:4px solid var(--warn);padding:12px;border-radius:10px;margin:12px 0;white-space:pre-wrap;font-size:15px;line-height:1.5}
+#alarm{position:fixed;inset:0;z-index:30;display:none;background:#5c0b10;overflow-y:auto;animation:alarmbg .8s infinite alternate}
+#alarm.on{display:block}
+@keyframes alarmbg{from{background:#4a080c}to{background:#8f1219}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.15)}}
+.al-inner{min-height:100%;padding:calc(env(safe-area-inset-top) + 28px) 22px calc(env(safe-area-inset-bottom) + 28px);text-align:center;animation:shake .5s 3}
+.al-siren{font-size:72px;animation:pulse .5s infinite alternate}
+.al-title{font-size:56px;font-weight:900;letter-spacing:6px;color:#fff}
+.al-big{white-space:pre-line;font-size:22px;font-weight:800;color:#fff;margin:8px 0 16px;line-height:1.4}
+.al-facts{background:rgba(0,0,0,.3);border-radius:14px;padding:12px;font-size:15px;line-height:1.8;color:#ffd7d9}
+.al-pledge{background:#fff;color:#5c0b10;border-radius:14px;padding:16px;margin:16px 0;font-size:18px;font-weight:800;white-space:pre-wrap;line-height:1.5}
+.al-stop{width:100%;background:#fff;color:#8f1219;font-size:19px;font-weight:900;padding:18px;border-radius:16px}
+.al-gate{margin-top:26px}
+.al-count{color:#ffb3b8;font-size:13px}
+.al-hint{color:#ffb3b8;font-size:13px;margin-bottom:6px}
+.al-phrase{color:#fff;font-weight:800;font-size:16px;margin-bottom:8px}
+#al-input{background:rgba(0,0,0,.35);border:1px solid #ff6b73;color:#fff;text-align:center}
+.al-go{width:100%;margin-top:8px;background:transparent;border:1px solid #ff6b73 !important;color:#ff9ea4;padding:12px;border-radius:12px;font-size:14px}
+.al-go:disabled{opacity:.35}
+.over-banner{background:#5c0b10;color:#fff;border-radius:14px;padding:12px 14px;font-weight:800;margin-bottom:12px;text-align:center}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translateX(-50%);background:var(--card2);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;z-index:20;pointer-events:none}
 .toast.on{opacity:1}
 </style>
@@ -91,6 +111,7 @@ nav button.on{color:var(--text)}
     </div>
     <div class="row between sub" style="margin-top:8px"><span id="today-alc">알코올 0g</span><span id="today-money">0원</span></div>
   </div>
+  <div class="over-banner" id="over-banner" style="display:none"></div>
   <div class="pace" id="pace" style="display:none"></div>
   <h2>한 잔 추가</h2>
   <div class="grid" id="drink-grid"></div>
@@ -165,6 +186,40 @@ nav button.on{color:var(--text)}
   </div>
 </div>
 
+<!-- 물 한 잔 팝업 -->
+<div class="modal" id="water">
+  <div class="sheet" style="text-align:center">
+    <div style="font-size:64px">💧</div>
+    <h3>물 한 잔 마셔요!</h3>
+    <div class="sub" id="water-msg">술 한 잔에 물 한 잔. 내일 아침이 달라져요.</div>
+    <div style="height:16px"></div>
+    <button class="btn primary" id="water-ok" style="background:var(--blue);color:#04172e">🥛 물 마셨어요</button>
+    <div style="height:8px"></div>
+    <button class="btn" id="water-later">조금 있다가 마실게요</button>
+  </div>
+</div>
+
+<!-- 목표 초과 강력 경고 (전체 화면) -->
+<div id="alarm">
+  <div class="al-inner">
+    <div class="al-siren">🚨</div>
+    <div class="al-title">STOP</div>
+    <div class="al-big" id="al-big"></div>
+    <div class="al-facts" id="al-facts"></div>
+    <div class="al-pledge" id="al-pledge"></div>
+    <button class="al-stop" id="al-stop">🙅 오늘은 진짜 그만 마실게요</button>
+    <div class="al-gate" id="al-gate">
+      <div class="al-count" id="al-count"></div>
+      <div id="al-typebox" style="display:none">
+        <div class="al-hint">그래도 마시려면 아래 문장을 똑같이 입력하세요</div>
+        <div class="al-phrase" id="al-phrase"></div>
+        <input id="al-input" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="al-go" id="al-go" disabled>약속을 어기고 기록하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 백업 시트 -->
 <div class="modal" id="bk">
   <div class="sheet">
@@ -226,13 +281,15 @@ function renderToday(){
   $('today-date').textContent = `${bd.getMonth()+1}월 ${bd.getDate()}일 ${'일월화수목금토'[bd.getDay()]}요일`;
   $('today-cups').textContent = fmtCups(g);
   $('today-goal').textContent = `/ ${S.goal}잔 (소주잔 기준)`;
-  $('today-alc').textContent = `알코올 ${Math.round(g)}g`;
+  $('today-alc').textContent = `알코올 ${Math.round(g)}g · 💧 물 ${(S.water || {})[k] || 0}잔`;
   $('today-money').textContent = won(w);
   const ratio = S.goal > 0 ? Math.min(c / S.goal, 1) : (c > 0 ? 1 : 0);
   const ring = $('ring');
   ring.style.strokeDashoffset = 465 * (1 - ratio);
   ring.style.stroke = c > S.goal ? 'var(--danger)' : ratio >= .8 ? 'var(--warn)' : 'var(--accent)';
   $('today-cups').style.color = c > S.goal ? 'var(--danger)' : '';
+  $('over-banner').style.display = c > S.goal ? 'block' : 'none';
+  $('over-banner').textContent = `🚨 오늘 목표 ${S.goal}잔을 ${fmtCups((c - S.goal) * SOJU_CUP)}잔 넘었어요. 이제 물만 마셔요 💧`;
 
   // 페이스
   const pace = $('pace');
@@ -268,7 +325,7 @@ function tryAdd(d){
   const drinkDays = weekDrinkDays();
   const newDay = logs.length === 0;
   let reason = null;
-  if (after > S.goal) reason = { t:'오늘 목표를 넘어요', m:`이 잔을 마시면 ${fmtCups(g + d.g)}잔이에요. 오늘 목표는 ${S.goal}잔이에요.` };
+  if (after > S.goal) { openAlarm(d, g, logs); return; }
   else if (newDay && drinkDays >= S.days) reason = { t:'이번 주 술자리 횟수 초과', m:`이번 주 이미 ${drinkDays}일 마셨어요. 목표는 주 ${S.days}일이에요.` };
   else if (S.pace > 0 && minsSince < S.pace) reason = { t:'조금 천천히!', m:`마지막 잔이 ${Math.floor(minsSince)}분 전이에요. ${Math.ceil(S.pace - minsSince)}분만 더 쉬었다 마셔요. 물 한 잔 어때요? 💧` };
   if (reason) { pending = d; $('warn-title').textContent = reason.t; $('warn-msg').textContent = reason.m; $('warn-pledge').textContent = S.pledge; $('warn').classList.add('on'); return; }
@@ -277,8 +334,69 @@ function tryAdd(d){
 function add(d){
   S.logs.push({ id:d.id, g:d.g, p:price(d), t:Date.now() }); save(); renderAll();
   if (navigator.vibrate) navigator.vibrate(15);
-  toast(`${d.e} ${d.n} 기록했어요`);
+  const left = S.goal - cups(todayGrams());
+  if (left > 0 && left <= 2) toast(`⚠️ 목표까지 ${fmtCups(left*SOJU_CUP)}잔 남았어요`);
+  else toast(`${d.e} ${d.n} 기록했어요`);
+  openWater();
 }
+function todayDrinkCount(){ const k = todayKey(); return S.logs.filter(l => dayKey(l.t) === k).length; }
+function todayWater(){ return (S.water || {})[todayKey()] || 0; }
+function openWater(){
+  const n = todayDrinkCount(), w = todayWater();
+  $('water-msg').textContent = w < n
+    ? `오늘 술 ${n}번 · 물 ${w}잔. 술 한 잔에 물 한 잔! 내일 아침이 달라져요.`
+    : `오늘 술 ${n}번 · 물 ${w}잔. 잘하고 있어요! 이번에도 한 잔 더 💪`;
+  setTimeout(() => $('water').classList.add('on'), 400);
+}
+$('water-ok').onclick = () => { S.water = S.water || {}; S.water[todayKey()] = todayWater() + 1; save(); $('water').classList.remove('on'); renderToday(); toast(`💧 물 ${todayWater()}잔째! 잘했어요`); };
+$('water-later').onclick = () => $('water').classList.remove('on');
+function todayGrams(){ const k = todayKey(); return S.logs.filter(l => dayKey(l.t) === k).reduce((s,l)=>s+l.g,0); }
+
+// ---------- 목표 초과 강력 경고 ----------
+const PHRASE = '나는 나와의 약속을 어깁니다';
+let alarmDrink = null, alarmTimer = null, audioCtx = null;
+function siren(){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), v = audioCtx.createGain(), t = audioCtx.currentTime;
+    o.type = 'square'; o.connect(v); v.connect(audioCtx.destination);
+    v.gain.setValueAtTime(0.08, t);
+    for (let i = 0; i < 6; i++) { o.frequency.setValueAtTime(880, t + i*0.4); o.frequency.setValueAtTime(620, t + i*0.4 + 0.2); }
+    v.gain.setValueAtTime(0, t + 2.4); o.start(t); o.stop(t + 2.4);
+  } catch {}
+  if (navigator.vibrate) navigator.vibrate([400,150,400,150,400]);
+}
+function openAlarm(d, g, logs){
+  alarmDrink = d;
+  const now = cups(g), after = cups(g + d.g), over = Math.max(after - S.goal, 0);
+  const money = logs.reduce((s,l)=>s+l.p,0) + price(d);
+  // 이미 초과했는데 또 마시려 하면 기다리는 시간이 더 길어짐
+  const overCount = logs.filter((l,i,a) => cups(a.slice(0,i+1).reduce((s,x)=>s+x.g,0)) > S.goal).length;
+  let wait = 20 + overCount * 20;
+  $('al-big').textContent = now > S.goal
+    ? `이미 목표 ${S.goal}잔을 넘었어요.\n지금 ${fmtCups(g)}잔째예요.`
+    : `이 잔을 마시면 목표 ${S.goal}잔을 넘어요.`;
+  $('al-facts').innerHTML =
+    `마시면 오늘 <b>${fmtCups(g + d.g)}잔</b> (목표보다 <b>${fmtCups(over*SOJU_CUP)}잔</b> 초과)<br>` +
+    `알코올 <b>${Math.round(g + d.g)}g</b> · 오늘 쓴 돈 <b>${won(money)}</b><br>` +
+    `내일 아침의 나에게 미안하지 않을까요?`;
+  $('al-pledge').textContent = S.pledge;
+  $('al-phrase').textContent = `"${PHRASE}"`;
+  $('al-input').value = ''; $('al-go').disabled = true; $('al-typebox').style.display = 'none';
+  $('alarm').classList.add('on'); $('alarm').scrollTop = 0;
+  const inner = document.querySelector('.al-inner'); inner.style.animation = 'none'; void inner.offsetWidth; inner.style.animation = '';
+  siren();
+  clearInterval(alarmTimer);
+  const tick = () => {
+    if (wait > 0) { $('al-count').textContent = `그래도 마시려면 ${wait}초 동안 다시 생각해 보세요…`; wait--; }
+    else { clearInterval(alarmTimer); $('al-count').textContent = ''; $('al-typebox').style.display = 'block'; }
+  };
+  tick(); alarmTimer = setInterval(tick, 1000);
+}
+function closeAlarm(){ clearInterval(alarmTimer); $('alarm').classList.remove('on'); alarmDrink = null; }
+$('al-stop').onclick = () => { closeAlarm(); S.stops = (S.stops||0) + 1; save(); toast(`멋져요! 참은 횟수 ${S.stops}번 💪`); };
+$('al-input').oninput = () => { $('al-go').disabled = $('al-input').value.replace(/\s+/g,' ').trim() !== PHRASE; };
+$('al-go').onclick = () => { const d = alarmDrink; closeAlarm(); if (d) add(d); };
 $('warn-stop').onclick = () => { pending = null; $('warn').classList.remove('on'); toast('멋져요! 💪'); };
 $('warn-go').onclick = () => { $('warn').classList.remove('on'); if (pending) add(pending); pending = null; };
 
