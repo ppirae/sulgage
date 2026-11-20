@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="술가계부">
+<meta name="theme-color" content="#0f1115">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>술가계부</title>
+<style>
+:root{
+  --bg:#0f1115; --card:#181b22; --card2:#20242d; --line:#2a2f3a;
+  --text:#eef0f4; --sub:#8b93a3; --accent:#4cc38a; --warn:#f5a524; --danger:#f2555a; --blue:#5b9cf5;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-user-select:none;user-select:none}
+body{overflow-x:hidden;padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 84px)}
+h1{font-size:22px;margin:4px 0 14px}
+h2{font-size:15px;color:var(--sub);font-weight:600;margin:22px 0 10px}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.sub{color:var(--sub);font-size:13px}
+.big{font-size:44px;font-weight:800;line-height:1}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.ring-wrap{position:relative;width:170px;height:170px;margin:4px auto 6px}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.drink{background:var(--card2);border-radius:14px;padding:12px 4px;text-align:center}
+.drink:active{transform:scale(.96);background:var(--line)}
+.drink .e{font-size:26px}
+.drink .n{font-size:13px;margin-top:4px;font-weight:600}
+.drink .g{font-size:11px;color:var(--sub)}
+.btn{background:var(--card2);border-radius:12px;padding:12px 14px;font-weight:600;width:100%}
+.btn.primary{background:var(--accent);color:#06210f}
+.btn.danger{background:#3a1d20;color:var(--danger)}
+.log-item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.log-item:last-child{border-bottom:0}
+.x{background:none;color:var(--sub);padding:0 4px;font-size:18px}
+.pace{border-radius:14px;padding:12px 14px;font-size:14px;font-weight:600;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{background:var(--card);border-radius:16px;padding:14px}
+.stat .v{font-size:24px;font-weight:800;margin-top:4px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;text-align:center}
+.cal .h{font-size:11px;color:var(--sub)}
+.cal .d{aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;background:var(--card2)}
+.cal .d.today{outline:2px solid var(--blue)}
+.cal .d.empty{background:none}
+.bars{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:6px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.bar i{display:block;width:100%;border-radius:6px 6px 3px 3px;background:var(--accent);min-height:2px}
+.bar span{font-size:10px;color:var(--sub)}
+label.f{display:block;margin:12px 0 4px;font-size:13px;color:var(--sub)}
+input,textarea,select{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text}
+textarea{min-height:80px;resize:vertical}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(15,17,21,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;padding:10px 0 8px;font-size:11px;color:var(--sub);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button .ic{font-size:20px}
+nav button.on{color:var(--text)}
+.page{display:none}.page.on{display:block}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:10}
+.modal.on{display:flex}
+.sheet{background:var(--card);border-radius:22px 22px 0 0;padding:22px 18px calc(env(safe-area-inset-bottom) + 18px);width:100%;max-width:520px}
+.sheet h3{margin:0 0 8px;font-size:20px}
+.pledge{background:var(--card2);border-left:4px solid var(--warn);padding:12px;border-radius:10px;margin:12px 0;white-space:pre-wrap;font-size:15px;line-height:1.5}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translateX(-50%);background:var(--card2);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;z-index:20;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- 오늘 -->
+<section class="page on" id="p-today">
+  <div class="row between"><h1 id="today-title">오늘</h1><span class="sub" id="today-date"></span></div>
+  <div class="card">
+    <div class="ring-wrap">
+      <svg width="170" height="170" viewBox="0 0 170 170">
+        <circle cx="85" cy="85" r="74" stroke="#2a2f3a" stroke-width="14" fill="none"/>
+        <circle id="ring" cx="85" cy="85" r="74" stroke="#4cc38a" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465"/>
+      </svg>
+      <div class="ring-center">
+        <div class="big" id="today-cups">0</div>
+        <div class="sub" id="today-goal">/ 7잔 (소주잔 기준)</div>
+      </div>
+    </div>
+    <div class="row between sub" style="margin-top:8px"><span id="today-alc">알코올 0g</span><span id="today-money">0원</span></div>
+  </div>
+  <div class="pace" id="pace" style="display:none"></div>
+  <h2>한 잔 추가</h2>
+  <div class="grid" id="drink-grid"></div>
+  <h2>오늘 기록</h2>
+  <div class="card" id="today-log"></div>
+</section>
+
+<!-- 통계 -->
+<section class="page" id="p-stats">
+  <h1>기록</h1>
+  <div class="stats">
+    <div class="stat"><div class="sub">연속 금주</div><div class="v" id="s-streak">0일</div></div>
+    <div class="stat"><div class="sub">이번 주 술 마신 날</div><div class="v" id="s-weekdays">0 / 2일</div></div>
+    <div class="stat"><div class="sub">이번 주 총량</div><div class="v" id="s-week">0잔</div></div>
+    <div class="stat"><div class="sub">이번 달 지출</div><div class="v" id="s-money">0원</div></div>
+  </div>
+  <h2>최근 7일 (소주잔)</h2>
+  <div class="card"><div class="bars" id="bars"></div></div>
+  <h2 class="row between"><button class="x" id="cal-prev">‹</button><span id="cal-title"></span><button class="x" id="cal-next">›</button></h2>
+  <div class="card"><div class="cal" id="cal"></div>
+    <div class="row sub" style="margin-top:10px;gap:14px;font-size:11px">
+      <span><span class="pill" style="background:#1f3d2e">&nbsp;</span> 금주</span>
+      <span><span class="pill" style="background:#4a4020">&nbsp;</span> 목표 이내</span>
+      <span><span class="pill" style="background:#4d2226">&nbsp;</span> 목표 초과</span>
+    </div>
+  </div>
+</section>
+
+<!-- 설정 -->
+<section class="page" id="p-settings">
+  <h1>설정</h1>
+  <div class="card">
+    <label class="f">하루 목표 (소주잔 기준, 소주 1병 = 7잔)</label>
+    <input type="number" id="set-goal" min="0" step="1" inputmode="numeric">
+    <label class="f">일주일에 술 마시는 날 최대</label>
+    <input type="number" id="set-days" min="0" max="7" step="1" inputmode="numeric">
+    <label class="f">잔 사이 최소 간격 (분, 0이면 끔)</label>
+    <input type="number" id="set-pace" min="0" step="5" inputmode="numeric">
+    <label class="f">나와의 약속 (목표를 넘기려 할 때 보여줘요)</label>
+    <textarea id="set-pledge"></textarea>
+    <button class="btn primary" id="save" style="margin-top:14px">저장</button>
+  </div>
+  <h2>술 가격 (원, 지출 계산용)</h2>
+  <div class="card" id="price-list"></div>
+  <h2>백업</h2>
+  <div class="card">
+    <p class="sub" style="margin-top:0">기록은 이 휴대폰에만 저장돼요. 휴대폰을 바꾸거나 혹시 모를 때를 위해 가끔 백업해 두세요.</p>
+    <button class="btn" id="export">📤 백업 내보내기 (복사)</button>
+    <div style="height:8px"></div>
+    <button class="btn" id="import">📥 백업 불러오기 (붙여넣기)</button>
+    <div style="height:8px"></div>
+    <button class="btn danger" id="reset">모든 기록 삭제</button>
+  </div>
+  <p class="sub" style="text-align:center">하루는 새벽 6시에 넘어가요 (새벽까지 마신 술은 전날로 기록)</p>
+</section>
+
+<nav>
+  <button class="on" data-p="today"><span class="ic">🍺</span>오늘</button>
+  <button data-p="stats"><span class="ic">📅</span>기록</button>
+  <button data-p="settings"><span class="ic">⚙️</span>설정</button>
+</nav>
+
+<!-- 경고 시트 -->
+<div class="modal" id="warn">
+  <div class="sheet">
+    <h3 id="warn-title">잠깐!</h3>
+    <div class="sub" id="warn-msg"></div>
+    <div class="pledge" id="warn-pledge"></div>
+    <button class="btn primary" id="warn-stop">오늘은 여기까지 할게요 💪</button>
+    <div style="height:8px"></div>
+    <button class="btn" id="warn-go">그래도 한 잔 기록하기</button>
+  </div>
+</div>
+
+<!-- 백업 시트 -->
+<div class="modal" id="bk">
+  <div class="sheet">
+    <h3 id="bk-title">백업</h3>
+    <textarea id="bk-text" style="min-height:140px;font-size:12px"></textarea>
+    <div style="height:10px"></div>
+    <button class="btn primary" id="bk-ok">확인</button>
+    <div style="height:8px"></div>
+    <button class="btn" id="bk-cancel">닫기</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// 알코올 g = 용량(ml) × 도수 × 0.8
+const DRINKS = [
+  {id:'soju',  e:'🍶', n:'소주 1잔',   g:6.5,  price:900},
+  {id:'beer',  e:'🍺', n:'맥주 500cc', g:18,   price:4500},
+  {id:'somaek',e:'🥂', n:'소맥 1잔',   g:12,   price:2000},
+  {id:'can',   e:'🥫', n:'맥주 1캔',   g:13,   price:2500},
+  {id:'wine',  e:'🍷', n:'와인 1잔',   g:15.5, price:8000},
+  {id:'whisky',e:'🥃', n:'위스키 1잔', g:9.5,  price:10000},
+  {id:'makg',  e:'🍚', n:'막걸리 1사발',g:9.5, price:1500},
+  {id:'hb',    e:'🍹', n:'하이볼',     g:12,   price:7000},
+  {id:'sojub', e:'🍾', n:'소주 1병',   g:47,   price:5000},
+];
+const SOJU_CUP = 6.5;
+const DAY_CUTOFF_H = 6;
+const KEY = 'sulgage.v1';
+
+const def = () => ({ logs:[], goal:7, days:2, pace:20,
+  pledge:'술은 즐겁게, 내일 후회하지 않게.\n오늘 목표만 지키자.', prices:{} });
+let S;
+try { S = Object.assign(def(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { S = def(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+
+const $ = id => document.getElementById(id);
+const price = d => S.prices[d.id] ?? d.price;
+const dayKey = ts => { const d = new Date(ts - DAY_CUTOFF_H*3600e3); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+if (!S.start) { S.start = S.logs.length ? dayKey(Math.min(...S.logs.map(l=>l.t))) : dayKey(Date.now()); save(); }
+const todayKey = () => dayKey(Date.now());
+const cups = g => Math.round(g / SOJU_CUP * 10) / 10;
+const fmtCups = g => { const c = cups(g); return (Number.isInteger(c) ? c : c.toFixed(1)); };
+const won = n => n.toLocaleString('ko-KR') + '원';
+const byDay = () => { const m = {}; for (const l of S.logs) { const k = dayKey(l.t); (m[k] ||= {g:0, w:0, n:0}); m[k].g += l.g; m[k].w += l.p; m[k].n++; } return m; };
+const keyOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const baseDate = () => new Date(Date.now() - DAY_CUTOFF_H*3600e3);
+
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.remove('on'),1800); }
+
+// ---------- 오늘 ----------
+function renderToday(){
+  const k = todayKey();
+  const logs = S.logs.filter(l => dayKey(l.t) === k).sort((a,b)=>b.t-a.t);
+  const g = logs.reduce((s,l)=>s+l.g,0), w = logs.reduce((s,l)=>s+l.p,0);
+  const c = cups(g);
+  const bd = baseDate();
+  $('today-date').textContent = `${bd.getMonth()+1}월 ${bd.getDate()}일 ${'일월화수목금토'[bd.getDay()]}요일`;
+  $('today-cups').textContent = fmtCups(g);
+  $('today-goal').textContent = `/ ${S.goal}잔 (소주잔 기준)`;
+  $('today-alc').textContent = `알코올 ${Math.round(g)}g`;
+  $('today-money').textContent = won(w);
+  const ratio = S.goal > 0 ? Math.min(c / S.goal, 1) : (c > 0 ? 1 : 0);
+  const ring = $('ring');
+  ring.style.strokeDashoffset = 465 * (1 - ratio);
+  ring.style.stroke = c > S.goal ? 'var(--danger)' : ratio >= .8 ? 'var(--warn)' : 'var(--accent)';
+  $('today-cups').style.color = c > S.goal ? 'var(--danger)' : '';
+
+  // 페이스
+  const pace = $('pace');
+  if (logs.length && S.pace > 0) {
+    const mins = Math.floor((Date.now() - logs[0].t) / 60000);
+    const left = S.pace - mins;
+    pace.style.display = 'block';
+    if (left > 0) { pace.style.background = '#3a2f14'; pace.style.color = 'var(--warn)'; pace.textContent = `⏱ 마지막 잔 ${mins}분 전 · ${left}분 더 쉬었다 마셔요`; }
+    else { pace.style.background = '#16291f'; pace.style.color = 'var(--accent)'; pace.textContent = `✅ 마지막 잔 ${mins}분 전 · 천천히 잘 마시고 있어요`; }
+  } else pace.style.display = 'none';
+
+  const box = $('today-log');
+  if (!logs.length) { box.innerHTML = '<div class="sub" style="text-align:center;padding:8px">아직 기록이 없어요 🙌</div>'; return; }
+  box.innerHTML = '';
+  for (const l of logs) {
+    const d = DRINKS.find(x=>x.id===l.id) || {e:'🍶', n:l.id};
+    const t = new Date(l.t);
+    const row = document.createElement('div'); row.className = 'log-item';
+    row.innerHTML = `<span>${d.e} ${d.n}</span><span class="row"><span class="sub">${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}</span><button class="x" aria-label="삭제">×</button></span>`;
+    row.querySelector('button').onclick = () => { S.logs = S.logs.filter(x => x !== l); save(); renderAll(); toast('삭제했어요'); };
+    box.appendChild(row);
+  }
+}
+
+let pending = null;
+function tryAdd(d){
+  const k = todayKey();
+  const logs = S.logs.filter(l => dayKey(l.t) === k);
+  const g = logs.reduce((s,l)=>s+l.g,0);
+  const after = cups(g + d.g);
+  const last = logs.reduce((m,l)=>Math.max(m,l.t),0);
+  const minsSince = last ? (Date.now()-last)/60000 : Infinity;
+  const drinkDays = weekDrinkDays();
+  const newDay = logs.length === 0;
+  let reason = null;
+  if (after > S.goal) reason = { t:'오늘 목표를 넘어요', m:`이 잔을 마시면 ${fmtCups(g + d.g)}잔이에요. 오늘 목표는 ${S.goal}잔이에요.` };
+  else if (newDay && drinkDays >= S.days) reason = { t:'이번 주 술자리 횟수 초과', m:`이번 주 이미 ${drinkDays}일 마셨어요. 목표는 주 ${S.days}일이에요.` };
+  else if (S.pace > 0 && minsSince < S.pace) reason = { t:'조금 천천히!', m:`마지막 잔이 ${Math.floor(minsSince)}분 전이에요. ${Math.ceil(S.pace - minsSince)}분만 더 쉬었다 마셔요. 물 한 잔 어때요? 💧` };
+  if (reason) { pending = d; $('warn-title').textContent = reason.t; $('warn-msg').textContent = reason.m; $('warn-pledge').textContent = S.pledge; $('warn').classList.add('on'); return; }
+  add(d);
+}
+function add(d){
+  S.logs.push({ id:d.id, g:d.g, p:price(d), t:Date.now() }); save(); renderAll();
+  if (navigator.vibrate) navigator.vibrate(15);
+  toast(`${d.e} ${d.n} 기록했어요`);
+}
+$('warn-stop').onclick = () => { pending = null; $('warn').classList.remove('on'); toast('멋져요! 💪'); };
+$('warn-go').onclick = () => { $('warn').classList.remove('on'); if (pending) add(pending); pending = null; };
+
+function renderDrinks(){
+  const grid = $('drink-grid'); grid.innerHTML = '';
+  for (const d of DRINKS) {
+    const b = document.createElement('button'); b.className = 'drink';
+    b.innerHTML = `<div class="e">${d.e}</div><div class="n">${d.n}</div><div class="g">소주 ${fmtCups(d.g)}잔</div>`;
+    b.onclick = () => tryAdd(d);
+    grid.appendChild(b);
+  }
+}
+
+// ---------- 통계 ----------
+function weekStart(){ const d = baseDate(); d.setHours(0,0,0,0); const wd = (d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d; } // 월요일 시작
+function weekDrinkDays(){ const m = byDay(); const s = weekStart(); let n = 0; for (let i=0;i<7;i++){ const d=new Date(s); d.setDate(s.getDate()+i); if (m[keyOf(d)]) n++; } return n; }
+let calOffset = 0;
+function renderStats(){
+  const m = byDay();
+  // 연속 금주
+  let streak = 0; const d = baseDate(); d.setHours(12,0,0,0);
+  if (m[keyOf(d)]) streak = 0; else {
+    const first = S.logs.length ? Math.min(...S.logs.map(l=>l.t)) : Date.now();
+    while (!m[keyOf(d)] && d.getTime() >= first - 864e5) { streak++; d.setDate(d.getDate()-1); }
+  }
+  $('s-streak').textContent = `${streak}일`;
+  const wd = weekDrinkDays();
+  $('s-weekdays').textContent = `${wd} / ${S.days}일`;
+  $('s-weekdays').style.color = wd > S.days ? 'var(--danger)' : '';
+  const ws = weekStart(); let wg = 0;
+  for (let i=0;i<7;i++){ const x=new Date(ws); x.setDate(ws.getDate()+i); wg += (m[keyOf(x)]?.g||0); }
+  $('s-week').textContent = `${fmtCups(wg)}잔`;
+  const bd = baseDate(); const mk = `${bd.getFullYear()}-${String(bd.getMonth()+1).padStart(2,'0')}`;
+  let mw = 0; for (const k in m) if (k.startsWith(mk)) mw += m[k].w;
+  $('s-money').textContent = won(mw);
+
+  // 최근 7일 막대
+  const bars = $('bars'); bars.innerHTML = '';
+  const vals = []; for (let i=6;i>=0;i--){ const x=baseDate(); x.setDate(x.getDate()-i); vals.push({d:x, c:cups(m[keyOf(x)]?.g||0)}); }
+  const max = Math.max(S.goal, ...vals.map(v=>v.c), 1);
+  for (const v of vals) {
+    const el = document.createElement('div'); el.className = 'bar';
+    const col = v.c === 0 ? 'var(--line)' : v.c > S.goal ? 'var(--danger)' : 'var(--accent)';
+    el.innerHTML = `<span>${v.c ? fmtCups(v.c*SOJU_CUP) : ''}</span><i style="height:${Math.max(v.c/max*80,2)}%;background:${col}"></i><span>${'일월화수목금토'[v.d.getDay()]}</span>`;
+    bars.appendChild(el);
+  }
+
+  // 달력
+  const cb = baseDate(); cb.setDate(1); cb.setMonth(cb.getMonth()+calOffset);
+  $('cal-title').textContent = `${cb.getFullYear()}년 ${cb.getMonth()+1}월`;
+  const cal = $('cal'); cal.innerHTML = '월화수목금토일'.split('').map(x=>`<div class="h">${x}</div>`).join('');
+  const lead = (cb.getDay()+6)%7; for (let i=0;i<lead;i++) cal.insertAdjacentHTML('beforeend','<div class="d empty"></div>');
+  const dim = new Date(cb.getFullYear(), cb.getMonth()+1, 0).getDate();
+  const tk = todayKey();
+  const startKey = S.start || (S.logs.length ? dayKey(Math.min(...S.logs.map(l=>l.t))) : tk);
+  for (let i=1;i<=dim;i++){
+    const x = new Date(cb.getFullYear(), cb.getMonth(), i); const k = keyOf(x); const e = m[k];
+    let bg = 'var(--card2)';
+    if (k <= tk && k >= startKey) bg = !e ? '#1f3d2e' : cups(e.g) > S.goal ? '#4d2226' : '#4a4020';
+    cal.insertAdjacentHTML('beforeend', `<div class="d${k===tk?' today':''}" style="background:${bg}">${i}</div>`);
+  }
+}
+$('cal-prev').onclick = () => { calOffset--; renderStats(); };
+$('cal-next').onclick = () => { if (calOffset < 0) { calOffset++; renderStats(); } };
+
+// ---------- 설정 ----------
+function renderSettings(){
+  $('set-goal').value = S.goal; $('set-days').value = S.days; $('set-pace').value = S.pace; $('set-pledge').value = S.pledge;
+  const pl = $('price-list'); pl.innerHTML = '';
+  for (const d of DRINKS) {
+    pl.insertAdjacentHTML('beforeend', `<div class="row between" style="margin:6px 0"><span>${d.e} ${d.n}</span><input data-id="${d.id}" type="number" inputmode="numeric" style="width:120px;text-align:right" value="${price(d)}"></div>`);
+  }
+}
+$('save').onclick = () => {
+  const num = (id, min, max) => { const v = parseInt($(id).value, 10); return isNaN(v) ? null : Math.min(Math.max(v, min), max); };
+  S.goal = num('set-goal', 0, 99) ?? S.goal; S.days = num('set-days', 0, 7) ?? S.days; S.pace = num('set-pace', 0, 240) ?? S.pace;
+  S.pledge = $('set-pledge').value.trim() || def().pledge;
+  document.querySelectorAll('#price-list input').forEach(i => { const v = parseInt(i.value, 10); if (!isNaN(v) && v >= 0) S.prices[i.dataset.id] = v; });
+  save(); renderAll(); toast('저장했어요');
+};
+let bkMode = null;
+$('export').onclick = async () => {
+  const txt = JSON.stringify(S);
+  bkMode = 'export'; $('bk-title').textContent = '백업 내보내기'; $('bk-text').value = txt; $('bk-ok').textContent = '복사하기'; $('bk').classList.add('on');
+};
+$('import').onclick = () => { bkMode = 'import'; $('bk-title').textContent = '백업 불러오기'; $('bk-text').value = ''; $('bk-text').placeholder = '백업 내용을 붙여넣으세요'; $('bk-ok').textContent = '불러오기'; $('bk').classList.add('on'); };
+$('bk-cancel').onclick = () => $('bk').classList.remove('on');
+$('bk-ok').onclick = async () => {
+  if (bkMode === 'export') {
+    try { await navigator.clipboard.writeText($('bk-text').value); toast('복사했어요. 메모앱 등에 붙여넣어 보관하세요'); }
+    catch { $('bk-text').select(); toast('길게 눌러 직접 복사해 주세요'); }
+    return;
+  }
+  try {
+    const o = JSON.parse($('bk-text').value);
+    if (!Array.isArray(o.logs)) throw 0;
+    if (!confirm(`기록 ${o.logs.length}개를 불러올까요? 지금 기록은 덮어써져요.`)) return;
+    S = Object.assign(def(), o); save(); renderAll(); $('bk').classList.remove('on'); toast('불러왔어요');
+  } catch { toast('백업 내용이 올바르지 않아요'); }
+};
+$('reset').onclick = () => { if (confirm('모든 기록을 지울까요? 되돌릴 수 없어요.')) { S.logs = []; save(); renderAll(); toast('삭제했어요'); } };
+
+// ---------- 공통 ----------
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.p));
+  if (b.dataset.p === 'settings') renderSettings();
+  window.scrollTo(0,0);
+});
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('on'); }));
+function renderAll(){ renderToday(); renderStats(); }
+renderDrinks(); renderAll();
+setInterval(renderToday, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) renderAll(); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
