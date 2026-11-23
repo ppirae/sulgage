@@ -418,10 +418,7 @@ function renderStats(){
   const m = byDay();
   // 연속 금주
   let streak = 0; const d = baseDate(); d.setHours(12,0,0,0);
-  if (m[keyOf(d)]) streak = 0; else {
-    const first = S.logs.length ? Math.min(...S.logs.map(l=>l.t)) : Date.now();
-    while (!m[keyOf(d)] && d.getTime() >= first - 864e5) { streak++; d.setDate(d.getDate()-1); }
-  }
+  while (!m[keyOf(d)] && keyOf(d) >= S.start) { streak++; d.setDate(d.getDate()-1); }
   $('s-streak').textContent = `${streak}일`;
   const wd = weekDrinkDays();
   $('s-weekdays').textContent = `${wd} / ${S.days}일`;
