@@ -151,8 +151,10 @@ nav button.on{color:var(--text)}
     <input type="number" id="set-days" min="0" max="7" step="1" inputmode="numeric">
     <label class="f">잔 사이 최소 간격 (분, 0이면 끔)</label>
     <input type="number" id="set-pace" min="0" step="5" inputmode="numeric">
-    <label class="f">평소 하루 술값 (원, 아낀 돈 계산용)</label>
+    <label class="f">평소 한 번 마실 때 술값 (원, 아낀 돈 계산용)</label>
     <input type="number" id="set-daily" min="0" step="1000" inputmode="numeric">
+    <label class="f">평소 일주일에 마시던 횟수 (아낀 돈 계산용)</label>
+    <input type="number" id="set-freq" min="0" max="7" step="1" inputmode="numeric">
     <label class="f">나와의 약속 (목표를 넘기려 할 때 보여줘요)</label>
     <textarea id="set-pledge"></textarea>
     <button class="btn primary" id="save" style="margin-top:14px">저장</button>
@@ -254,7 +256,7 @@ const SOJU_CUP = 6.5;
 const DAY_CUTOFF_H = 6;
 const KEY = 'sulgage.v1';
 
-const def = () => ({ logs:[], goal:7, days:2, pace:20, daily:30000,
+const def = () => ({ logs:[], goal:7, days:2, pace:20, daily:30000, freq:1,
   pledge:'술은 즐겁게, 내일 후회하지 않게.\n오늘 목표만 지키자.', prices:{} });
 let S;
 try { S = Object.assign(def(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { S = def(); }
@@ -423,8 +425,9 @@ function renderStats(){
   let streak = 0; const d = baseDate(); d.setHours(12,0,0,0);
   while (!m[keyOf(d)] && keyOf(d) >= S.start) { streak++; d.setDate(d.getDate()-1); }
   $('s-streak').textContent = `${streak}일`;
-  $('s-saved').textContent = won(streak * S.daily);
-  $('s-daily').textContent = `(${streak}일 × ${won(S.daily)})`;
+  // 평소 주 freq회 × 회당 daily원 → 하루 평균 지출 × 금주일
+  $('s-saved').textContent = won(Math.round(streak * S.daily * S.freq / 7));
+  $('s-daily').textContent = `(${streak}일 · 평소 주 ${S.freq}회 × ${won(S.daily)})`;
   const wd = weekDrinkDays();
   $('s-weekdays').textContent = `${wd} / ${S.days}일`;
   $('s-weekdays').style.color = wd > S.days ? 'var(--danger)' : '';
@@ -466,7 +469,7 @@ $('cal-next').onclick = () => { if (calOffset < 0) { calOffset++; renderStats();
 
 // ---------- 설정 ----------
 function renderSettings(){
-  $('set-goal').value = S.goal; $('set-days').value = S.days; $('set-pace').value = S.pace; $('set-daily').value = S.daily; $('set-pledge').value = S.pledge;
+  $('set-goal').value = S.goal; $('set-days').value = S.days; $('set-pace').value = S.pace; $('set-daily').value = S.daily; $('set-freq').value = S.freq; $('set-pledge').value = S.pledge;
   const pl = $('price-list'); pl.innerHTML = '';
   for (const d of DRINKS) {
     pl.insertAdjacentHTML('beforeend', `<div class="row between" style="margin:6px 0"><span>${d.e} ${d.n}</span><input data-id="${d.id}" type="number" inputmode="numeric" style="width:120px;text-align:right" value="${price(d)}"></div>`);
@@ -474,7 +477,7 @@ function renderSettings(){
 }
 $('save').onclick = () => {
   const num = (id, min, max) => { const v = parseInt($(id).value, 10); return isNaN(v) ? null : Math.min(Math.max(v, min), max); };
-  S.goal = num('set-goal', 0, 99) ?? S.goal; S.days = num('set-days', 0, 7) ?? S.days; S.pace = num('set-pace', 0, 240) ?? S.pace; S.daily = num('set-daily', 0, 10000000) ?? S.daily;
+  S.goal = num('set-goal', 0, 99) ?? S.goal; S.days = num('set-days', 0, 7) ?? S.days; S.pace = num('set-pace', 0, 240) ?? S.pace; S.daily = num('set-daily', 0, 10000000) ?? S.daily; S.freq = num('set-freq', 0, 7) ?? S.freq;
   S.pledge = $('set-pledge').value.trim() || def().pledge;
   document.querySelectorAll('#price-list input').forEach(i => { const v = parseInt(i.value, 10); if (!isNaN(v) && v >= 0) S.prices[i.dataset.id] = v; });
   save(); renderAll(); toast('저장했어요');
